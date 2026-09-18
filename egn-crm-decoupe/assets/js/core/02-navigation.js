@@ -29,21 +29,21 @@ const NAV=[
   {id:'settings',ic:'⚙️',label:'Paramètres',perm:'settings_access'}
 ];
 const PAGES={
-  dash:{t:'Tableau de bord',s:"Vue d'ensemble de l'activité",r:renderDash},
-  planning:{t:'Planning',s:'Calendrier & carte des rendez-vous',r:renderPlanning},
-  rappels:{t:'Rappels',s:'Tous vos rappels planifiés',r:renderRappels},
-  import:{t:'Import des leads',s:'Importez votre base client Excel / CSV',r:renderImport},
-  leads:{t:'Leads',s:'Tous vos prospects et dossiers',r:renderLeads},
-  clients:{t:'Clients',s:'Dossiers transmis & installés',r:renderClients},
-  docs:{t:'Documents',s:'Modèles de documents générables depuis les fiches client',r:renderDocsTab},
-  rdvs:{t:'RDVs',s:'Liste des rendez-vous',r:renderRdvs},
-  sav:{t:'SAV',s:'Service après-vente',r:renderSav},
-  compta:{t:'Comptabilité',s:'Rentabilité globale & appels à facturation poseurs',r:renderComptaGlobal},
-  dashglobal:{t:'Dashboard Coco',s:'Activité, comptabilité et stock en un coup d\'œil',r:renderDashGlobal},
-  docsadmin:{t:'Documents admin',s:'Vos dossiers et fichiers administratifs',r:renderDocsAdmin},
-  stock:{t:'Stock',s:'Gestion des matériels et mouvements de stock',r:renderStock},
-  users:{t:'Utilisateurs',s:'Comptes, codes d\'accès & permissions',r:renderUsers},
-  settings:{t:'Paramètres',s:'Statuts, produits, sources & société',r:renderSettings}
+  dash:{t:'Tableau de bord',s:"Vue d'ensemble de l'activité",r:()=>renderDash()},
+  planning:{t:'Planning',s:'Calendrier & carte des rendez-vous',r:()=>renderPlanning()},
+  rappels:{t:'Rappels',s:'Tous vos rappels planifiés',r:()=>renderRappels()},
+  import:{t:'Import des leads',s:'Importez votre base client Excel / CSV',r:()=>renderImport()},
+  leads:{t:'Leads',s:'Tous vos prospects et dossiers',r:()=>renderLeads()},
+  clients:{t:'Clients',s:'Dossiers transmis & installés',r:()=>renderClients()},
+  docs:{t:'Documents',s:'Modèles de documents générables depuis les fiches client',r:()=>renderDocsTab()},
+  rdvs:{t:'RDVs',s:'Liste des rendez-vous',r:()=>renderRdvs()},
+  sav:{t:'SAV',s:'Service après-vente',r:()=>renderSav()},
+  compta:{t:'Comptabilité',s:'Rentabilité globale & appels à facturation poseurs',r:()=>renderComptaGlobal()},
+  dashglobal:{t:'Dashboard Coco',s:'Activité, comptabilité et stock en un coup d\'œil',r:()=>renderDashGlobal()},
+  docsadmin:{t:'Documents admin',s:'Vos dossiers et fichiers administratifs',r:()=>renderDocsAdmin()},
+  stock:{t:'Stock',s:'Gestion des matériels et mouvements de stock',r:()=>renderStock()},
+  users:{t:'Utilisateurs',s:'Comptes, codes d\'accès & permissions',r:()=>renderUsers()},
+  settings:{t:'Paramètres',s:'Statuts, produits, sources & société',r:()=>renderSettings()}
 };
 let CUR='dash';
 function buildNav(){
