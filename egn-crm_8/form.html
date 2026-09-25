@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Transmettre un dossier</title>
+<link rel="icon" href="favicon-32.png">
+<link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A2B3D; --green:#7CC242; --green-deep:#5BA82E;
+    --grey:#6B7785; --border:#DDE3E8; --soft:#F4F7F9; --coral:#E63946;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Saira',system-ui,sans-serif;background:var(--soft);color:var(--navy);
+       padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+  .wrap{max-width:640px;margin:0 auto;padding:1.2rem}
+  .card{background:#fff;border-radius:16px;box-shadow:0 2px 16px rgba(26,43,61,.08);padding:1.4rem;margin-bottom:1rem}
+  .head{text-align:center;padding:1.6rem 1.2rem 1rem}
+  .head h1{margin:.3rem 0 .2rem;font-size:1.35rem;font-weight:800}
+  .head p{margin:0;color:var(--grey);font-size:.88rem}
+  .badge{display:inline-block;background:rgba(124,194,66,.15);color:var(--green-deep);
+         border-radius:20px;padding:.2rem .8rem;font-size:.76rem;font-weight:700;margin-bottom:.5rem}
+  label{display:block;font-size:.74rem;font-weight:700;color:var(--grey);
+        text-transform:uppercase;letter-spacing:.4px;margin-bottom:.25rem}
+  .champ{margin-bottom:.9rem}
+  input,select,textarea{width:100%;font-family:'Saira',sans-serif;font-size:.95rem;
+    border:1.5px solid var(--border);border-radius:10px;padding:.6rem .8rem;outline:none;background:#fff}
+  input:focus,select:focus,textarea:focus{border-color:var(--green)}
+  .obl{color:var(--coral)}
+  button{width:100%;font-family:'Saira',sans-serif;font-size:1rem;font-weight:800;
+    background:var(--green);color:#fff;border:none;border-radius:12px;padding:.85rem;cursor:pointer}
+  button:hover{background:var(--green-deep)}
+  button:disabled{background:#B7C2CC;cursor:not-allowed}
+  .msg{border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:.9rem}
+  .msg.err{background:#FEE8E8;border:1.5px solid var(--coral);color:#A32D2D}
+  .centre{text-align:center;padding:2.5rem 1rem;color:var(--grey)}
+  .gros{font-size:2.4rem;margin-bottom:.5rem}
+  .pied{text-align:center;font-size:.74rem;color:var(--grey);padding:.5rem 0 1.5rem}
+  .sect{font-size:.78rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin:1.2rem 0 .5rem;padding-top:1rem;border-top:1.5px solid var(--border)}
+  .boutons{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem}
+  .ajout{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2rem;
+    border:1.5px dashed var(--border);border-radius:12px;padding:.9rem .5rem;cursor:pointer;
+    font-size:.82rem;font-weight:700;color:var(--navy);background:var(--soft)}
+  .ajout:hover{border-color:var(--green)}
+  .ajout span{font-size:1.5rem}
+  .ajout input{display:none}
+  .fichiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:.5rem}
+  .vign{position:relative;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;aspect-ratio:1}
+  .vign img{width:100%;height:100%;object-fit:cover;display:block}
+  .vign .doc{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:.3rem;text-align:center;font-size:.64rem;color:var(--grey);word-break:break-all}
+  .vign .doc b{font-size:1.6rem;display:block}
+  .vign .x{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:none;
+    background:rgba(26,43,61,.75);color:#fff;font-size:.8rem;cursor:pointer;padding:0;line-height:22px}
+  .vign .etat{position:absolute;inset:auto 0 0 0;font-size:.62rem;font-weight:700;text-align:center;padding:2px;color:#fff}
+  .vign .etat.ok{background:rgba(91,168,46,.9)} .vign .etat.err{background:rgba(230,57,70,.9)} .vign .etat.cours{background:rgba(26,43,61,.75)}
+  .aide{font-size:.74rem;color:var(--grey);margin:.3rem 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="badge" id="badge" style="display:none"></div>
+    <h1 id="titre">Transmettre un dossier</h1>
+    <p id="soustitre">Chargement…</p>
+  </div>
+  <div id="zone"><div class="centre"><div class="gros">⏳</div>Chargement du formulaire…</div></div>
+  <div class="pied" id="pied"></div>
+</div>
+
+<script>
+/* Aucune cle d'API ici : la page ne parle qu'a la fonction serveur,
+   qui valide le jeton avant d'enregistrer quoi que ce soit. */
+const FONCTION='https://gfxgvapoqicorismbvwt.supabase.co/functions/v1/submit-lead';
+const JETON=new URLSearchParams(location.search).get('t')||'';
+let CHAMPS=[], VALEURS={}, COMMENTAIRE='';
+
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const zone=()=>document.getElementById('zone');
+
+async function appeler(action,extra){
+  const r=await fetch(FONCTION,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action,token:JETON,...(extra||{})})
+  });
+  const d=await r.json().catch(()=>({error:'Réponse illisible'}));
+  if(!r.ok||d.error)throw new Error(d.error||'Erreur serveur');
+  return d;
+}
+
+function erreur(texte){
+  document.getElementById('soustitre').textContent='';
+  zone().innerHTML=`<div class="card"><div class="msg err"><b>Impossible d'afficher le formulaire</b><br>${esc(texte)}</div>
+    <p style="font-size:.85rem;color:var(--grey);margin:0">Vérifiez que vous utilisez bien le lien qui vous a été transmis, ou contactez votre interlocuteur.</p></div>`;
+}
+
+function champVisible(c){
+  if(!c.showIf)return true;
+  const parent=CHAMPS.find(x=>x.id===c.showIf||x.label===c.showIf);
+  return parent?VALEURS[parent.id]==='Oui':true;
+}
+
+function dessiner(){
+  let h='<div class="card">';
+  CHAMPS.forEach(c=>{
+    if(!champVisible(c))return;
+    const v=esc(VALEURS[c.id]||'');
+    const req=c.required?' <span class="obl">*</span>':'';
+    h+=`<div class="champ"><label>${esc(c.label)}${req}</label>`;
+    if(c.type==='select'){
+      h+=`<select onchange="majChamp('${c.id}',this.value)"><option value="">— Choisir —</option>`
+        +(c.options||[]).map(o=>`<option ${VALEURS[c.id]===o?'selected':''}>${esc(o)}</option>`).join('')+`</select>`;
+    }else if(c.type==='bool'){
+      h+=`<select onchange="majChamp('${c.id}',this.value)"><option value="">— Choisir —</option>
+        <option ${VALEURS[c.id]==='Oui'?'selected':''}>Oui</option>
+        <option ${VALEURS[c.id]==='Non'?'selected':''}>Non</option></select>`;
+    }else{
+      const t=c.type==='number'?'number':c.type==='email'?'email':c.type==='tel'?'tel':c.type==='date'?'date':'text';
+      h+=`<input type="${t}" value="${v}" oninput="majChamp('${c.id}',this.value)">`;
+    }
+    h+=`</div>`;
+  });
+  h+=`<div class="sect">Commentaire <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--grey)">— facultatif</span></div>
+    <textarea id="commentaire" rows="4" maxlength="4000" placeholder="Contexte, disponibilités du client, points d'attention…" oninput="COMMENTAIRE=this.value" style="resize:vertical">${esc(COMMENTAIRE)}</textarea>`;
+  h+=`<div class="sect">Documents et photos <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--grey)">— facultatif</span></div>
+    <div class="boutons">
+      <label class="ajout"><span>📷</span>Prendre une photo<input type="file" accept="image/*" capture="environment" multiple onchange="ajouterFichiers(this,'photo')"></label>
+      <label class="ajout"><span>📎</span>Joindre un fichier<input type="file" accept="application/pdf,image/*" multiple onchange="ajouterFichiers(this,'document')"></label>
+    </div>
+    <div class="fichiers" id="fichiers"></div>
+    <p class="aide">PDF ou images, 10 Mo maximum par fichier. Les photos sont allégées automatiquement.</p>`;
+  h+=`<button id="envoyer" onclick="envoyer()" style="margin-top:1rem">Transmettre le dossier</button></div>`;
+  zone().innerHTML=h;
+}
+
+function majChamp(id,val){
+  VALEURS[id]=val;
+  const c=CHAMPS.find(x=>x.id===id);
+  // Un champ conditionnel peut apparaitre ou disparaitre : on redessine
+  if(c&&(c.type==='bool'||CHAMPS.some(x=>x.showIf===id||x.showIf===c.label)))dessiner();
+}
+
+/* ---------- Fichiers joints ---------- */
+let FICHIERS=[];   // {id, file, categorie, apercu, etat}
+function ajouterFichiers(input,categorie){
+  const liste=[...(input.files||[])];
+  for(const file of liste){
+    const okType=file.type==='application/pdf'||file.type.startsWith('image/');
+    if(!okType){alert(file.name+' : format non accepté (PDF ou image).');continue;}
+    if(FICHIERS.length>=25){alert('25 fichiers maximum.');break;}
+    FICHIERS.push({id:Math.random().toString(36).slice(2),file,categorie,
+      apercu:file.type.startsWith('image/')?URL.createObjectURL(file):null,etat:''});
+  }
+  input.value='';
+  dessinerFichiers();
+}
+function retirerFichier(id){
+  const f=FICHIERS.find(x=>x.id===id);
+  if(f&&f.apercu)URL.revokeObjectURL(f.apercu);
+  FICHIERS=FICHIERS.filter(x=>x.id!==id);
+  dessinerFichiers();
+}
+function dessinerFichiers(){
+  const z=document.getElementById('fichiers');if(!z)return;
+  z.innerHTML=FICHIERS.map(f=>`<div class="vign">
+    ${f.apercu?`<img src="${f.apercu}" alt="">`:`<div class="doc"><b>📄</b>${esc(f.file.name)}</div>`}
+    ${f.etat?'':`<button class="x" onclick="retirerFichier('${f.id}')" title="Retirer">✕</button>`}
+    ${f.etat==='cours'?'<div class="etat cours">Envoi…</div>':f.etat==='ok'?'<div class="etat ok">✓ Envoyé</div>':f.etat==='err'?'<div class="etat err">Échec</div>':''}
+  </div>`).join('');
+}
+/* Allège une photo : 1 800 px maximum sur le grand côté, JPEG qualité 0,82.
+   Une photo de téléphone de 4 Mo passe ainsi autour de 400 Ko. */
+function allegerImage(file){
+  return new Promise(resolve=>{
+    if(!file.type.startsWith('image/')||file.type==='image/heic'||file.type==='image/heif'){resolve(file);return;}
+    const img=new Image();
+    img.onload=()=>{
+      const max=1800;let{width:w,height:h}=img;
+      if(w<=max&&h<=max&&file.size<1500000){resolve(file);return;}
+      const r=Math.min(1,max/Math.max(w,h));w=Math.round(w*r);h=Math.round(h*r);
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cv.toBlob(b=>{
+        if(!b){resolve(file);return;}
+        const nom=file.name.replace(/\.[^.]+$/,'')+'.jpg';
+        resolve(new File([b],nom,{type:'image/jpeg'}));
+      },'image/jpeg',0.82);
+    };
+    img.onerror=()=>resolve(file);
+    img.src=URL.createObjectURL(file);
+  });
+}
+function enBase64(file){
+  return new Promise((ok,ko)=>{
+    const r=new FileReader();
+    r.onload=()=>ok(String(r.result).split(',')[1]);
+    r.onerror=()=>ko(new Error('Lecture impossible'));
+    r.readAsDataURL(file);
+  });
+}
+/* Envoie les fichiers un par un : chaque requete reste legere */
+async function envoyerFichiers(recordId){
+  let ok=0,ko=0;
+  for(const f of FICHIERS){
+    f.etat='cours';dessinerFichiers();
+    try{
+      const fichier=await allegerImage(f.file);
+      if(fichier.size>10*1024*1024)throw new Error('trop volumineux');
+      const data=await enBase64(fichier);
+      await appeler('upload',{record_id:recordId,categorie:f.categorie,
+        fichier:{nom:fichier.name,type:fichier.type,data}});
+      f.etat='ok';ok++;
+    }catch(e){f.etat='err';ko++;console.error(f.file.name,e);}
+    dessinerFichiers();
+  }
+  return{ok,ko};
+}
+async function envoyer(){
+  const manquants=CHAMPS.filter(c=>c.required&&champVisible(c)&&!(VALEURS[c.id]||'').trim());
+  if(manquants.length){
+    alert('Champs obligatoires à renseigner :\n\n• '+manquants.map(c=>c.label).join('\n• '));
+    return;
+  }
+  const b=document.getElementById('envoyer');
+  b.disabled=true;b.textContent='Envoi en cours…';
+  try{
+    const d=await appeler('submit',{champs:VALEURS,commentaire:COMMENTAIRE});
+    // Le dossier existe : on envoie les fichiers, un par un
+    let bilan={ok:0,ko:0};
+    if(FICHIERS.length&&d.id){
+      b.textContent='Envoi des fichiers…';
+      bilan=await envoyerFichiers(d.id);
+    }
+    document.getElementById('soustitre').textContent='';
+    zone().innerHTML=`<div class="card"><div class="centre">
+      <div class="gros">✅</div>
+      <div style="font-size:1.1rem;font-weight:800;color:var(--green-deep);margin-bottom:.3rem">Dossier transmis</div>
+      <div style="font-size:.9rem">Référence : <b>${esc(d.dossier||'')}</b></div>
+      ${FICHIERS.length?`<div style="font-size:.85rem;margin-top:.6rem">${bilan.ok} fichier${bilan.ok>1?'s':''} joint${bilan.ok>1?'s':''}${bilan.ko?` · <b style="color:var(--coral)">${bilan.ko} en échec</b> — renvoyez-les à votre interlocuteur`:''}</div>`:''}
+      <p style="font-size:.85rem;margin-top:.8rem">Nous revenons vers vous rapidement.</p>
+      <button style="margin-top:1rem;max-width:260px" onclick="FICHIERS=[];location.reload()">Transmettre un autre dossier</button>
+    </div></div>`;
+  }catch(e){
+    b.disabled=false;b.textContent='Transmettre le dossier';
+    zone().insertAdjacentHTML('afterbegin',`<div class="msg err">${esc(e.message)}</div>`);
+  }
+}
+
+(async()=>{
+  if(!JETON){erreur('Aucun lien fourni.');return;}
+  try{
+    const c=await appeler('config');
+    document.getElementById('titre').textContent=c.societe||'Transmettre un dossier';
+    document.getElementById('soustitre').textContent=c.operation
+      ?`Formulaire de transmission — ${c.operation}`
+      :'Formulaire de transmission de dossier';
+    if(c.libelle){
+      const b=document.getElementById('badge');
+      b.textContent=c.libelle;b.style.display='inline-block';
+    }
+    document.getElementById('pied').textContent=(c.societe||'')+' — formulaire sécurisé';
+    CHAMPS=c.champs||[];
+    if(!CHAMPS.length){erreur("Aucun champ n'est configuré pour ce lien.");return;}
+    dessiner();
+  }catch(e){erreur(e.message);}
+})();
+</script>
+</body>
+</html>
